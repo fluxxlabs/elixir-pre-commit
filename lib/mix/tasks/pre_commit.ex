@@ -12,25 +12,27 @@ defmodule Mix.Tasks.PreCommit do
   """
   @commands Application.get_env(:pre_commit, :commands) || []
   @verbose Application.get_env(:pre_commit, :verbose) || false
-  @stash_changes Application.get_env(:pre_commit, :stash_changes) || true
 
   def run(_) do
     IO.puts("\e[95mPre-commit running...\e[0m")
-    stash_changes(@stash_changes)
+
+    stash_changes(should_stash_changes?())
 
     @commands
     |> Enum.each(&run_cmds/1)
 
-    stash_pop_changes(@stash_changes)
+    stash_pop_changes(should_stash_changes?())
     System.halt(0)
   end
 
   defp stash_changes(false), do: nil
+
   defp stash_changes(true) do
     {_, 0} = System.cmd("git", String.split("stash push --keep-index --message pre_commit", " "))
   end
 
   defp stash_pop_changes(false), do: nil
+
   defp stash_pop_changes(true) do
     System.cmd("git", String.split("stash pop", " "), stderr_to_stdout: true)
     |> case do
@@ -67,6 +69,13 @@ defmodule Mix.Tasks.PreCommit do
 
         {_, 0} = System.cmd("git", String.split("stash pop", " "))
         System.halt(1)
+    end
+  end
+
+  defp should_stash_changes?() do
+    case(Application.get_env(:pre_commit, :stash_changes)) do
+      false -> false
+      _ -> true
     end
   end
 end
