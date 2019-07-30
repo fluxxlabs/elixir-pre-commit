@@ -52,5 +52,4 @@ We like adding [credo](https://github.com/rrrene/credo) and
 our code consistent and well covered!
 
 There is a [known issue](https://github.com/dwyl/elixir-pre-commit/issues/32)
-with the fact that running the pre-commit will restore deleted files to the working
-tree.
+with the fact that running the pre-commit will restore deleted files to the working tree. To avoid this use configuration option `stash_changes: false`

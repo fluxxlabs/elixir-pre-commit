@@ -15,11 +15,25 @@ defmodule Mix.Tasks.PreCommit do
 
   def run(_) do
     IO.puts("\e[95mPre-commit running...\e[0m")
-    {_, 0} = System.cmd("git", String.split("stash push --keep-index --message pre_commit", " "))
+
+    stash_changes(should_stash_changes?())
 
     @commands
     |> Enum.each(&run_cmds/1)
 
+    stash_pop_changes(should_stash_changes?())
+    System.halt(0)
+  end
+
+  defp stash_changes(false), do: nil
+
+  defp stash_changes(true) do
+    {_, 0} = System.cmd("git", String.split("stash push --keep-index --message pre_commit", " "))
+  end
+
+  defp stash_pop_changes(false), do: nil
+
+  defp stash_pop_changes(true) do
     System.cmd("git", String.split("stash pop", " "), stderr_to_stdout: true)
     |> case do
       {_, 0} ->
@@ -32,8 +46,6 @@ defmodule Mix.Tasks.PreCommit do
         error
     end
     |> IO.puts()
-
-    System.halt(0)
   end
 
   defp run_cmds(cmd) do
@@ -55,8 +67,15 @@ defmodule Mix.Tasks.PreCommit do
           "\e[31mPre-commit failed on `mix #{cmd}`.\e[0m \nCommit again with --no-verify to live dangerously and skip pre-commit."
         )
 
-        {_, 0} = System.cmd("git", String.split("stash pop", " "))
+        stash_pop_changes(should_stash_changes?())
         System.halt(1)
+    end
+  end
+
+  defp should_stash_changes?() do
+    case(Application.get_env(:pre_commit, :stash_changes)) do
+      false -> false
+      _ -> true
     end
   end
 end
