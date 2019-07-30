@@ -67,7 +67,7 @@ defmodule Mix.Tasks.PreCommit do
           "\e[31mPre-commit failed on `mix #{cmd}`.\e[0m \nCommit again with --no-verify to live dangerously and skip pre-commit."
         )
 
-        {_, 0} = System.cmd("git", String.split("stash pop", " "))
+        stash_pop_changes(should_stash_changes?())
         System.halt(1)
     end
   end
